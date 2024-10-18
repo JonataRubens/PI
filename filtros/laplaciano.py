@@ -25,7 +25,7 @@ def convolucao_2d(imagem, kernel):
     return output
 
 # Carregar imagem em escala de cinza
-imagem = cv2.imread(r"C:\Users\WEB\Documents\GitHub\PI\filtros\lapla.png", 0)
+imagem = cv2.imread(r"C:\Users\WEB\Documents\GitHub\PI\filtros\meia-lua.jpg", 0)
 
 # Definir as quatro máscaras Laplacianas
 laplacian_mask_1 = np.array([[0, 1, 0],
