@@ -1,54 +1,44 @@
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 
-# Função para encontrar o limiar pelo método do vale
-def metodo_do_vale(histograma):
-    # Encontra os índices dos picos no histograma
-    picos = np.where((histograma[1:-1] > histograma[:-2]) & (histograma[1:-1] > histograma[2:]))[0] + 1
-    print("Picos encontrados:", picos)  # Diagnóstico
+def metodoDoVale(imagem):
+    cinza = cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
+    
+    histograma = cv2.calcHist([cinza], [0], None, [256], [0, 256])
 
-    if len(picos) >= 2:
-        # Encontra o menor valor entre os dois maiores picos (vale)
-        pico_1 = picos[0]
-        pico_2 = picos[1]
-        limiar = np.argmin(histograma[pico_1:pico_2]) + pico_1
-        return limiar
-    else:
-        return None  # Caso não existam picos definidos
+    vales = []
+    for i in range(1, 255):
+        if histograma[i-1] > histograma[i] and histograma[i+1] > histograma[i]:
+            vales.append(i)
+    
+    vales.sort()
 
-# Carrega a imagem em tons de cinza
-imagem = cv2.imread(r"C:\Users\WEB\Documents\GitHub\PI\morfologia\imagem_teste.png", cv2.IMREAD_GRAYSCALE)
-if imagem is None:
-    print("Erro ao carregar a imagem. Verifique o caminho.")
-else:
-    # Calcula o histograma da imagem
-    histograma = cv2.calcHist([imagem], [0], None, [256], [0, 256])
-    histograma = histograma.flatten()
-    print("Histograma:", histograma)  # Diagnóstico
+    limiar = int(vales[0])
+    return limiar
 
-    # Encontra o limiar pelo método do vale
-    limiar = metodo_do_vale(histograma)
 
-    # Limiariza a imagem usando o limiar encontrado
-    if limiar is not None:
-        _, imagem_limiarizada = cv2.threshold(imagem, limiar, 255, cv2.THRESH_BINARY)
-        
-        # Exibe a imagem original e a segmentada
-        plt.figure(figsize=(10,5))
+def segmentacaoPorLimiarizacao(imagem, limiar):
+    # Convertendo a imagem para escala de cinza
+    cinza = cv2.cvtColor(imagem, cv2.COLOR_BGR2GRAY)
+    
+    # Criar uma imagem binária vazia com o mesmo tamanho da imagem original
+    binaria = np.zeros_like(cinza)
 
-        plt.subplot(1, 3, 1)
-        plt.title('Imagem Original')
-        plt.imshow(imagem, cmap='gray')
+    for i in range(cinza.shape[0]):
+        for j in range(cinza.shape[1]):
+            if cinza[i, j] > limiar:
+                binaria[i, j] = 255 
+            else:
+                binaria[i, j] = 0    
+    
+    return binaria
 
-        plt.subplot(1, 3, 2)
-        plt.title('Histograma')
-        plt.plot(histograma)
 
-        plt.subplot(1, 3, 3)
-        plt.title('Imagem Segmentada')
-        plt.imshow(imagem_limiarizada, cmap='gray')
 
-        plt.show()
-    else:
-        print("Não foi possível determinar o limiar pelo método do vale.")
+imagem = cv2.imread('imagemSegmentacao.png')
+
+limiar = metodoDoVale(imagem)
+
+imagemBinaria = segmentacaoPorLimiarizacao(imagem, limiar)
+
+cv2.imwrite('resultanteSegmentacao.png', imagemBinaria)
